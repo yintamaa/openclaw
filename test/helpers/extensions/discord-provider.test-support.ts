@@ -477,21 +477,10 @@ vi.mock("../../../extensions/discord/src/monitor/thread-bindings.js", () => ({
 
 // provider.ts imports resolveThreadBinding* from openclaw/plugin-sdk/channel-runtime (a large
 // barrel). Under some CI test environments the barrel can yield undefined exports due to
-// transitive circular imports during module evaluation. Explicitly source these functions from
-// their canonical module so they are always defined after vi.resetModules().
-vi.mock("openclaw/plugin-sdk/channel-runtime", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("openclaw/plugin-sdk/channel-runtime")>();
-  const {
-    resolveThreadBindingIdleTimeoutMs,
-    resolveThreadBindingMaxAgeMs,
-    resolveThreadBindingsEnabled,
-  } = await vi.importActual<typeof import("../../../src/channels/thread-bindings-policy.js")>(
+// transitive circular imports during module evaluation. Import only from the canonical source
+// module so these are always defined without loading the full barrel on every vi.resetModules().
+vi.mock("openclaw/plugin-sdk/channel-runtime", async () => {
+  return await vi.importActual<typeof import("../../../src/channels/thread-bindings-policy.js")>(
     "../../../src/channels/thread-bindings-policy.ts",
   );
-  return {
-    ...actual,
-    resolveThreadBindingIdleTimeoutMs,
-    resolveThreadBindingMaxAgeMs,
-    resolveThreadBindingsEnabled,
-  };
 });
